@@ -1,4 +1,4 @@
-package metarl.initialexpcode;
+package experiments.initialexpcode;
 
 import metarl.EnvironmentAndTask;
 import burlap.behavior.singleagent.ValueFunctionInitialization;

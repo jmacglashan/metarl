@@ -1,6 +1,10 @@
-package metarl.initialexpcode;
+package experiments.fivechain;
+
+import java.util.HashSet;
+import java.util.Set;
 
 import metarl.EnvironmentAndTask;
+import metarl.ParameterizedEnvironmentFactory;
 import burlap.domain.singleagent.graphdefined.GraphDefinedDomain;
 import burlap.oomdp.auxiliary.StateGenerator;
 import burlap.oomdp.auxiliary.common.ConstantStateGenerator;
@@ -12,19 +16,48 @@ import burlap.oomdp.singleagent.GroundedAction;
 import burlap.oomdp.singleagent.RewardFunction;
 
 
-public class ChainGenerator {
+/**
+ * This class will generate five chain environments and tasks. The first parameter represents the slip probability. The next 5 parameters represent
+ * the order of the states in the chain.
+ * @author James MacGlashan
+ *
+ */
+public class FiveChainGen implements ParameterizedEnvironmentFactory{
 
-	int [] stateOrder;
-	double slipProb;
-	
-	
-	public ChainGenerator(int [] stateOrder, double slipProb){
-		this.stateOrder = stateOrder.clone();
-		this.slipProb = slipProb;
+	@Override
+	public int nParams() {
+		return 6;
 	}
-	
-	public EnvironmentAndTask generateChainET(){
+
+	@Override
+	public double[] paramLowerLimits() {
+		return new double[]{0, 0, 0, 0, 0, 0};
+	}
+
+	@Override
+	public double[] paramUpperLimits() {
+		return new double[]{0.5, 4, 4, 4, 4, 4};
+	}
+
+	@Override
+	public EnvironmentAndTask generateEnvironment(double[] params) {
 		
+		//repackage our parameters and check for validity
+		double slipProb = params[0];
+		int [] stateOrder = new int[5];
+		
+		Set<Integer> used = new HashSet<Integer>(5);
+		for(int i = 1; i < params.length; i++){
+			int sid = (int)params[i];
+			if(used.contains(sid)){
+				throw new RuntimeException("Error: state order for 5 chain problem is invalid because of a duplicate state in the order");
+			}
+			stateOrder[i-1] = sid;
+			used.add(sid);
+		}
+		
+		
+		//create our graph domain instance
 		GraphDefinedDomain gdd = new GraphDefinedDomain(stateOrder.length);
 		int sNodeId = stateOrder[0];
 		int endNode = stateOrder[stateOrder.length-1];
@@ -50,6 +83,8 @@ public class ChainGenerator {
 		gdd.setTransition(endNode, 1, endNode, slipProb);
 		
 		Domain domain = gdd.generateDomain();
+		
+		//handle task specific information
 		RewardFunction rf = new ChainRF(sNodeId, endNode);
 		TerminalFunction tf = new NullTermination();
 		double discount = 0.95;
@@ -63,18 +98,14 @@ public class ChainGenerator {
 	}
 	
 	
-	@Override
-	public String toString(){
-		StringBuffer buf = new StringBuffer(50);
-		for(int i : this.stateOrder){
-			buf.append(i + " ");
-		}
-		buf.append(slipProb);
-		return buf.toString();
-	}
-	
-	
-	class ChainRF implements RewardFunction{
+	/**
+	 * A reward function for the 5 chain problem. If the agent transitions to the start node, they get reward of 2. If the agent acting in
+	 * the last node and transitioned to the last node, they get a reward of 10.
+	 * 
+	 * @author James MacGlashan
+	 *
+	 */
+	static class ChainRF implements RewardFunction{
 
 		int endNode;
 		int startNode;
@@ -104,6 +135,5 @@ public class ChainGenerator {
 		
 		
 	}
-
 
 }
