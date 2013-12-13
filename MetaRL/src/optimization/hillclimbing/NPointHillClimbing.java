@@ -34,7 +34,6 @@ public class NPointHillClimbing implements Optimization {
 	protected int							nPoints;
 	protected int							nRestarts;
 	protected int							nIterationsUntilStop;
-	protected int 							totalIterations;
 	
 
 	
@@ -46,12 +45,6 @@ public class NPointHillClimbing implements Optimization {
 	public NPointHillClimbing(VarEvaluaiton evaluator, VariableRandomGenerator varGen, VariableClamper clamper, NeighborhoodGenerator neighborGen, int nPoints, int dim,
 			int nIters, int nRestarts){
 		this.HCInit(evaluator, varGen, clamper, neighborGen, nPoints, dim, nIters, nRestarts);
-	}
-	
-	public NPointHillClimbing(VarEvaluaiton evaluator, VariableRandomGenerator varGen, VariableClamper clamper, NeighborhoodGenerator neighborGen, int nPoints, int dim,
-			int nIters, int nRestarts, int totalIterations){
-		this.HCInit(evaluator, varGen, clamper, neighborGen, nPoints, dim, nIters, nRestarts);
-		this.totalIterations = totalIterations;
 	}
 	
 	
@@ -97,7 +90,6 @@ public class NPointHillClimbing implements Optimization {
 		
 		int numUnChanged = 0;
 		int numRestarts = 0;
-		int iterations = 0;
 		do{
 			
 			boolean changed = false;
@@ -116,7 +108,6 @@ public class NPointHillClimbing implements Optimization {
 				int bestN = -1;
 				bestFit = pFitness;
 				for(int j = 0; j < neighbors.size(); j++){
-					iterations++;
 					OptVariables neighbor = neighbors.get(j);
 					compareAgainst.add(neighbor);
 					double neighborFitness = this.evaluator.evaluate(compareAgainst).get(nPoints-1);
@@ -183,7 +174,7 @@ public class NPointHillClimbing implements Optimization {
 			this.printStats();
 			
 			
-		}while(numRestarts <= nRestarts && iterations < totalIterations);
+		}while(numRestarts <= nRestarts);
 		
 
 	}
