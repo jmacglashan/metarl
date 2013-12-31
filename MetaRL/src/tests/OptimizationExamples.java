@@ -8,15 +8,12 @@ import optimization.Optimization;
 import optimization.VarEvaluaiton;
 import optimization.VariableClamper;
 import optimization.VariableRandomGenerator;
-import optimization.crossentropy.CrossEntropy;
-import optimization.generateAndTest.GenerateAndTest;
+import optimization.bandit.HOO;
 import optimization.geneticalgorithm.GeneticAlgorithm;
 import optimization.geneticalgorithm.gamodules.ContinuousBlendMate;
 import optimization.geneticalgorithm.gamodules.RandomKiller;
 import optimization.geneticalgorithm.gamodules.RandomOrganismMutate;
 import optimization.geneticalgorithm.gamodules.SoftMaxSingleParentMateSelector;
-import optimization.hillclimbing.NPointHillClimbing;
-import optimization.hillclimbing.hcmodules.AccelContNeighborhood;
 import optimization.optmodules.ContinuousBoundedClamp;
 import optimization.optmodules.ContinuousBoundedVarGen;
 
@@ -35,7 +32,7 @@ public class OptimizationExamples {
 		
 		
 		VarEvaluaiton eval = new TwoVarFitnessFunction();
-		//eval = new TwoVarConvexFitnessFunction(); //uncomment to optimize the simpler convex function
+		eval = new TwoVarConvexFitnessFunction(); //uncomment to optimize the simpler convex function
 		
 		double [] low = new double[]{-5., -5.};
 		double [] high = new double[]{5., 5.};
@@ -52,8 +49,10 @@ public class OptimizationExamples {
 				200, 1, 1, 0.3, 10, 2);
 		
 		//opt = new NPointHillClimbing(eval, varGen, clamp, new AccelContNeighborhood(0.1, 3., 0.3), 1, 2, 1, 0);
-		//opt = new GenerateAndTest(eval, varGen, clamp, 700, 2);
-		//opt = new CrossEntropy(eval, varGen, clamp, 2, 30, 10, 30, 0.1);
+		//opt = new GenerateAndTest(eval, varGen, clamp, 300, 2);
+		//opt = new CrossEntropy(eval, varGen, clamp, 2, 30, 10, 30, 0.05);
+		//opt = new CrossEntropy(eval, varGen, clamp, 2, 20, 10, 100, 0.01);
+		opt = new HOO(eval, clamp, low, high, 300, 1.);
 		
 		
 		opt.optimize();
@@ -115,7 +114,7 @@ public class OptimizationExamples {
 				double x = inst.v(0);
 				double y = inst.v(1);
 
-				double f = -1*((x*x) - (y*y)) + 5;
+				double f = (-1*(x*x) - (y*y)) + 5;
 				
 				fitness.add(f);
 				
