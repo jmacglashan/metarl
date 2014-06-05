@@ -22,7 +22,6 @@ public class HOO implements Optimization {
 	protected double []			lowerLims;
 	protected double []			upperLims;
 	
-	protected double			multiplicitiveConstant;
 	protected int				maxSamples;
 	
 	
@@ -31,11 +30,15 @@ public class HOO implements Optimization {
 	protected HOONode			root;
 	protected Random			rand;
 	
+	protected double			v ;
+	protected double			roe;
+	
+	protected boolean 			useGreedySampleOnReturnBest = false;
 	
 	protected VarFitnessPair	best = null;
 	
 	
-	public HOO(VarEvaluaiton varEval, VariableClamper clamper, double[] lowerLims, double[] upperLims, int maxSamples){
+	public HOO(VarEvaluaiton varEval, VariableClamper clamper, double[] lowerLims, double[] upperLims, int maxSamples, double v, double roe){
 		
 		this.varEval = varEval;
 		this.clamper = clamper;
@@ -45,26 +48,19 @@ public class HOO implements Optimization {
 		this.upperLims = upperLims;
 		this.maxSamples = maxSamples;
 		
-		this.root = new HOONode(lowerLims.clone(), upperLims.clone());
+		this.root = new HOONode(lowerLims.clone(), upperLims.clone(), 0);
+		
+		this.v = v;
+		this.roe = roe;
 		
 	}
 	
 	
 	
-	public HOO(VarEvaluaiton varEval, VariableClamper clamper, double[] lowerLims, double[] upperLims, int maxSamples, double multiplicitiveConstant){
-		
-		this.varEval = varEval;
-		this.clamper = clamper;
-		this.domainSampler = new DomainSampler.UniformDomainSampler();
-		
-		this.lowerLims = lowerLims;
-		this.upperLims = upperLims;
-		this.maxSamples = maxSamples;
-		
-		this.multiplicitiveConstant = multiplicitiveConstant;
-		
-		this.root = new HOONode(lowerLims.clone(), upperLims.clone());
-		
+	
+	
+	public void setUseGreedySampleOnReturnBest(boolean useGreedySampleOnReturnBest){
+		this.useGreedySampleOnReturnBest = useGreedySampleOnReturnBest;
 	}
 	
 	
@@ -86,7 +82,12 @@ public class HOO implements Optimization {
 
 	@Override
 	public OptVariables getBest() {
-		return this.best.var;
+		if(!this.useGreedySampleOnReturnBest){
+			return this.best.var;
+		}
+		else{
+			return this.root.sampleBest();
+		}
 	}
 
 	@Override
@@ -116,16 +117,18 @@ public class HOO implements Optimization {
 		protected int				n = 0;
 		protected double			sumReturn = 0.;
 		protected double			bValue = Double.POSITIVE_INFINITY;
+		protected int				h;
 		
 		protected HOONode			child1 = null;
 		protected HOONode			child2 = null;
 		
 		
 		
-		public HOONode(double[] lowerLims, double[] upperLims){
+		public HOONode(double[] lowerLims, double[] upperLims, int height){
 			
 			this.lowerLims = lowerLims;
 			this.upperLims = upperLims;
+			this.h = height;
 			
 		}
 		
@@ -137,6 +140,13 @@ public class HOO implements Optimization {
 			
 			return vf;
 
+		}
+		
+		public OptVariables sampleBest(){
+			VarFitnessPair vf = this.sampleHelper();
+			this.updateBValue();
+			
+			return vf.var;
 		}
 		
 		protected VarFitnessPair sampleHelper(){
@@ -169,8 +179,10 @@ public class HOO implements Optimization {
 				
 				HOONode selected = this.child1;
 				if(this.child2.bValue > this.child1.bValue){
-					selected = child2;
+					selected = this.child2;
 				}
+				
+				
 				
 				VarFitnessPair vf = selected.sample();
 				
@@ -180,6 +192,25 @@ public class HOO implements Optimization {
 				
 				return vf;
 				
+			}
+			
+		}
+		
+		
+		protected OptVariables sampleBestHelper(){
+			if(this.isLeaf()){
+				OptVariables var = HOO.this.domainSampler.sampleDomain(this.lowerLims, this.upperLims);
+				HOO.this.clamper.clamp(var);
+				return var;
+			}
+			else{
+				
+				HOONode selected = this.child1;
+				if(this.child2.getAverageReturn() > this.child1.getAverageReturn()){
+					selected = this.child2;
+				}
+				
+				return selected.sampleBestHelper();
 			}
 			
 		}
@@ -201,7 +232,7 @@ public class HOO implements Optimization {
 				return Double.POSITIVE_INFINITY;
 			}
 			double inner = 2 * Math.log(HOO.this.nSamples) / this.n;
-			double conf = Math.sqrt(inner) * HOO.this.multiplicitiveConstant;
+			double conf = Math.sqrt(inner) + (HOO.this.v * Math.pow(HOO.this.roe, this.h));
 			return conf;
 		}
 		
@@ -238,8 +269,8 @@ public class HOO implements Optimization {
 			double [] c2UpperLims = this.upperLims.clone();
 			c2LowerLims[sd] = mid;
 			
-			this.child1 = new HOONode(c1LowerLims, c1UpperLims);
-			this.child2 = new HOONode(c2LowerLims, c2UpperLims);
+			this.child1 = new HOONode(c1LowerLims, c1UpperLims, this.h + 1);
+			this.child2 = new HOONode(c2LowerLims, c2UpperLims, this.h + 1);
 			
 		}
 		

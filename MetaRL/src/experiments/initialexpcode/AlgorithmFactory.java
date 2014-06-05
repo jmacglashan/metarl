@@ -6,6 +6,7 @@ import burlap.behavior.singleagent.learning.tdmethods.QLearning;
 import burlap.behavior.singleagent.planning.commonpolicies.EpsilonGreedy;
 import burlap.behavior.statehashing.DiscreteStateHashFactory;
 import burlap.domain.singleagent.graphdefined.GraphDefinedDomain;
+import burlap.oomdp.core.AbstractGroundedAction;
 import burlap.oomdp.core.State;
 import burlap.oomdp.singleagent.GroundedAction;
 
@@ -54,9 +55,9 @@ public class AlgorithmFactory {
 		}
 
 		@Override
-		public double qValue(State s, GroundedAction a) {
+		public double qValue(State s, AbstractGroundedAction a) {
 			int cNodeId = s.getObjectsOfTrueClass(GraphDefinedDomain.CLASSAGENT).get(0).getDiscValForAttribute(GraphDefinedDomain.ATTNODE);
-			int aId = this.actionId(a);
+			int aId = this.actionId((GroundedAction)a);
 			return qInit[cNodeId][aId];
 		}
 		

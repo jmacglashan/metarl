@@ -18,7 +18,7 @@ public class CrossEntropy implements PopulationOptimization {
 	protected MultiVariateNormalGenerator		distributionGenerator;
 	protected int								dim;
 	protected OptVariables						best;
-	protected double							bestFitness;
+	protected double							bestFitness = Double.NEGATIVE_INFINITY;
 	protected int								nEvals;
 	protected int								debugCode;
 	protected List <VarFitnessPair>				population;
@@ -170,8 +170,8 @@ public class CrossEntropy implements PopulationOptimization {
 	
 	protected class MeanCovariance{
 		
-		double [] means;
-		double [][] covariance;
+		public double [] means;
+		public double [][] covariance;
 		
 		public MeanCovariance(List <VarFitnessPair> sample){
 			

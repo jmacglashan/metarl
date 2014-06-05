@@ -119,7 +119,7 @@ public class FiveChainExampleExp {
 	 */
 	protected EnvironmentAndTask sampleClass3(FiveChainGen gen){
 		
-		double r = rand.nextDouble()*gen.paramLowerLimits()[0];
+		double r = rand.nextDouble()*(gen.paramUpperLimits()[0] - gen.paramLowerLimits()[0]) + gen.paramLowerLimits()[0];
 		
 		EnvironmentAndTask env = gen.generateEnvironment(new double[]{r, 0, 1, 2, 3, 4});
 		

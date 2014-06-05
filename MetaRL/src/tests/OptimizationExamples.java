@@ -52,7 +52,7 @@ public class OptimizationExamples {
 		//opt = new GenerateAndTest(eval, varGen, clamp, 300, 2);
 		//opt = new CrossEntropy(eval, varGen, clamp, 2, 30, 10, 30, 0.05);
 		//opt = new CrossEntropy(eval, varGen, clamp, 2, 20, 10, 100, 0.01);
-		opt = new HOO(eval, clamp, low, high, 300, 1.);
+		opt = new HOO(eval, clamp, low, high, 300, 0., 1.);
 		
 		
 		opt.optimize();
