@@ -13,6 +13,9 @@ public class SingleEnvironmentSingleSampleReturn extends EnvironmentsSampleMetaR
 
 	protected Random rand = RandomFactory.getMapped(0);
 	
+	protected boolean shouldNormalize = false;
+	protected double lowerVal;
+	protected double upperVal;
 	
 	public SingleEnvironmentSingleSampleReturn(
 			ParameterizedRLFactory rlFactory,
@@ -22,11 +25,28 @@ public class SingleEnvironmentSingleSampleReturn extends EnvironmentsSampleMetaR
 		
 	}
 	
+	public SingleEnvironmentSingleSampleReturn(
+			ParameterizedRLFactory rlFactory,
+			int numLearningSteps,
+			List<EnvironmentAndTask> sampleEnvironments,
+			double lowerVal, double upperVal) {
+		super(rlFactory, numLearningSteps, sampleEnvironments);
+		this.shouldNormalize = true;
+		this.lowerVal = lowerVal;
+		this.upperVal = upperVal;
+		
+	}
+	
 	
 	@Override
 	public double getPeformance(OptVariables vars) {
 		
-		return this.getCumulativeReturn(vars, this.sampleEnvironmentFromEnvironmentSamples());
+		double v = this.getCumulativeReturn(vars, this.sampleEnvironmentFromEnvironmentSamples());
+		if(this.shouldNormalize){
+			v = (v - this.lowerVal) / (this.upperVal - this.lowerVal);
+		}
+		
+		return v;
 		
 	}
 
