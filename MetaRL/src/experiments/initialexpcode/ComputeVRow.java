@@ -10,6 +10,7 @@ import metarl.EnvironmentAndTask;
 
 import burlap.behavior.singleagent.EpisodeAnalysis;
 import burlap.behavior.singleagent.Policy;
+import burlap.behavior.singleagent.QValue;
 import burlap.behavior.singleagent.Policy.ActionProb;
 import burlap.behavior.singleagent.learning.tdmethods.QLearning;
 import burlap.behavior.singleagent.planning.commonpolicies.GreedyQPolicy;
@@ -65,7 +66,14 @@ public class ComputeVRow {
 			System.out.println(i + " " + p.getAction(s).toString());
 		}*/
 		
+		//getAlgorithmDescriptions(1);
+		//getEnvironmentDescriptions(4);
+		ComputeVRow cvr = new ComputeVRow(2, 1);
+		//cvr.printAllOptimalPolicies();
+		cvr.getValue(1);
+		
 		//The below is the actual code that is being commented out to test
+		/*
 		if(args.length != 5){
 			System.out.println("Format: EnvClass AlgClass EnvRow rOutputFilePath pOutputFilePath");
 			System.exit(0);
@@ -82,10 +90,24 @@ public class ComputeVRow {
 		//cvr.writeRowToFile(outputPath, er);
 		cvr.writeRPRowsToFiles(rOutputPath, pOutputPath, er);
 		System.out.println("Finished.");
-		
+		*/
 
 	}
 	
+	
+	public static void getAlgorithmDescriptions(int aClass){
+		List<AlgorithmFactory> as = AlgorithmSampler.sampleClass(aClass, 1000);
+		for(int i = 0; i < as.size(); i++){
+			System.out.println(as.get(i).toString());
+		}
+	}
+	
+	public static void getEnvironmentDescriptions(int mClass){
+		List<ChainGenerator> ms = EnvionrmentSampler.sampleClass(mClass, 1000);
+		for(int i = 0; i < ms.size(); i++){
+			System.out.println(ms.get(i).toString());
+		}
+	}
 	
 	public ComputeVRow(int mClass, int aClass){
 		
@@ -100,6 +122,27 @@ public class ComputeVRow {
 		for(AlgorithmFactory a : this.as){
 			System.out.println(a.toString());
 		}*/
+		
+	}
+	
+	public void printAllOptimalPolicies(){
+		for(int i = 0; i < this.ms.size(); i++){
+			EnvironmentAndTask et = this.ms.get(i).generateChainET();
+			Policy p = this.getOptimalPolicy(i);
+			System.out.println(this.getPolicyBitString(et, this.ms.get(i), p));
+		}
+	}
+	
+	public void getValue(int mInd){
+		EnvironmentAndTask env = this.ms.get(mInd).generateChainET();
+		ValueIteration vi = new ValueIteration(env.domain, env.rf, env.tf, env.discount, new DiscreteStateHashFactory(), 0.0001, 1000);
+		DPrint.toggleCode(vi.getDebugCode(), false);
+		vi.planFromState(env.initialStateGenerator.generateState());
+		List<QValue> qs = vi.getQs(GraphDefinedDomain.getState(env.domain, 0));
+		//System.out.println(vi.value(GraphDefinedDomain.getState(env.domain, 0)));
+		for(QValue q : qs){
+			System.out.println(q.a.toString() + ": " + q.q);
+		}
 		
 	}
 	
@@ -148,7 +191,7 @@ public class ComputeVRow {
 				double [] v = this.computeVReturnAndPolicy(row, i);
 				outR.write(""+v[0]);
 				outP.write(""+v[1]);
-				System.out.println("Computed col " + i);
+				System.out.println("Computed col " + i + ". " + v[0] + " " + v[1]);
 			}
 			outR.write("\n");
 			outP.write("\n");
@@ -180,7 +223,35 @@ public class ComputeVRow {
 		
 	}
 	
+	public Policy getOptimalPolicy(int mInd){
+		EnvironmentAndTask env = this.ms.get(mInd).generateChainET();
+		
+		ValueIteration vi = new ValueIteration(env.domain, env.rf, env.tf, env.discount, new DiscreteStateHashFactory(), 0.0001, 1000);
+		DPrint.toggleCode(vi.getDebugCode(), false);
+		vi.planFromState(env.initialStateGenerator.generateState());
+		Policy optPolicy = new GreedyQPolicy(vi);
+		
+		return optPolicy;
+	}
 	
+	public String getPolicyBitString(EnvironmentAndTask env, ChainGenerator gen, Policy p){
+		StringBuffer buf = new StringBuffer(6);
+		
+		for(int i = 0; i < gen.stateOrder.length; i++){
+			int snode = gen.stateOrder[i];
+			//State s = GraphDefinedDomain.getState(env.domain, snode); //use this one to get it order from left to right nodes
+			State s = GraphDefinedDomain.getState(env.domain, i); //use this one to get it ordered by state node id
+			GroundedAction ga = (GroundedAction)p.getAction(s);
+			if(ga.actionName().equals("action0")){
+				buf.append("0");
+			}
+			else{
+				buf.append("1");
+			}
+		}
+		
+		return buf.toString();
+	}
 	
 	public double [] computeVReturnAndPolicy(int mInd, int aInd){
 		

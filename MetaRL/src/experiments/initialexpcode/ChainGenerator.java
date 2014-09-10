@@ -14,8 +14,9 @@ import burlap.oomdp.singleagent.RewardFunction;
 
 public class ChainGenerator {
 
-	int [] stateOrder;
-	double slipProb;
+	public int [] stateOrder;
+	public double slipProb;
+	public boolean class5 = false;
 	
 	
 	public ChainGenerator(int [] stateOrder, double slipProb){
@@ -23,31 +24,96 @@ public class ChainGenerator {
 		this.slipProb = slipProb;
 	}
 	
+	public ChainGenerator(int [] stateOrder, double slipProb, boolean class5){
+		this.stateOrder = stateOrder.clone();
+		this.slipProb = slipProb;
+		this.class5 = class5;
+	}
+	
 	public EnvironmentAndTask generateChainET(){
 		
 		GraphDefinedDomain gdd = new GraphDefinedDomain(stateOrder.length);
-		int sNodeId = stateOrder[0];
-		int endNode = stateOrder[stateOrder.length-1];
 		
+		int sNodeId;
+		int endNode;
 		
-		//handle transitions for all but end node
-		for(int i = 0; i < stateOrder.length-1; i++){
-			int sId = stateOrder[i];
-			int nId = stateOrder[i+1];
-			gdd.setTransition(sId, 0, nId, 1.-slipProb);
-			gdd.setTransition(sId, 0, sNodeId, slipProb);
+		if(!this.class5){
 			
-			gdd.setTransition(sId, 1, sNodeId, 1.-slipProb);
-			gdd.setTransition(sId, 1, nId, slipProb);
+			sNodeId = stateOrder[0];
+			endNode = stateOrder[stateOrder.length-1];
+			
+			
+			//handle transitions for all but end node
+			for(int i = 0; i < stateOrder.length-1; i++){
+				int sId = stateOrder[i];
+				int nId = stateOrder[i+1];
+				gdd.setTransition(sId, 0, nId, 1.-slipProb);
+				gdd.setTransition(sId, 0, sNodeId, slipProb);
+				
+				gdd.setTransition(sId, 1, sNodeId, 1.-slipProb);
+				gdd.setTransition(sId, 1, nId, slipProb);
+				
+			}
+			
+			//handle end node transition
+			gdd.setTransition(endNode, 0, endNode, 1.-slipProb);
+			gdd.setTransition(endNode, 0, sNodeId, slipProb);
+			
+			gdd.setTransition(endNode, 1, sNodeId, 1.-slipProb);
+			gdd.setTransition(endNode, 1, endNode, slipProb);
+			
+			
+			
+			
+		}
+		else{
+			
+			sNodeId = 0;
+			endNode = stateOrder.length-1;
+			
+			
+			//handle transitions for all but end node
+			//states stay in fixed order; actions changed based on 0-1 of index
+			for(int i = 0; i < stateOrder.length-1; i++){
+				int sId = i;
+				int nId = i+1;
+				
+				if(stateOrder[i] == 0){
+					gdd.setTransition(sId, 0, nId, 1.-slipProb);
+					gdd.setTransition(sId, 0, sNodeId, slipProb);
+					
+					gdd.setTransition(sId, 1, sNodeId, 1.-slipProb);
+					gdd.setTransition(sId, 1, nId, slipProb);
+				}
+				else{
+					gdd.setTransition(sId, 1, nId, 1.-slipProb);
+					gdd.setTransition(sId, 1, sNodeId, slipProb);
+					
+					gdd.setTransition(sId, 0, sNodeId, 1.-slipProb);
+					gdd.setTransition(sId, 0, nId, slipProb);
+				}
+				
+			}
+			
+			//handle end node transition
+			if(stateOrder[endNode] == 0){
+				gdd.setTransition(endNode, 0, endNode, 1.-slipProb);
+				gdd.setTransition(endNode, 0, sNodeId, slipProb);
+				
+				gdd.setTransition(endNode, 1, sNodeId, 1.-slipProb);
+				gdd.setTransition(endNode, 1, endNode, slipProb);
+			}
+			else{
+				gdd.setTransition(endNode, 1, endNode, 1.-slipProb);
+				gdd.setTransition(endNode, 1, sNodeId, slipProb);
+				
+				gdd.setTransition(endNode, 0, sNodeId, 1.-slipProb);
+				gdd.setTransition(endNode, 0, endNode, slipProb);
+			}
+			
 			
 		}
 		
-		//handle end node transition
-		gdd.setTransition(endNode, 0, endNode, 1.-slipProb);
-		gdd.setTransition(endNode, 0, sNodeId, slipProb);
-		
-		gdd.setTransition(endNode, 1, sNodeId, 1.-slipProb);
-		gdd.setTransition(endNode, 1, endNode, slipProb);
 		
 		Domain domain = gdd.generateDomain();
 		RewardFunction rf = new ChainRF(sNodeId, endNode);
@@ -60,6 +126,8 @@ public class ChainGenerator {
 		
 		
 		return et;
+		
+		
 	}
 	
 	

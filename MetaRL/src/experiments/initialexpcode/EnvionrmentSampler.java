@@ -23,6 +23,9 @@ public class EnvionrmentSampler {
 		else if(i == 4){
 			return sampleM4(n);
 		}
+		else if(i == 5){
+			return sampleM5(n);
+		}
 		return null;
 	}
 	
@@ -81,6 +84,25 @@ public class EnvionrmentSampler {
 		
 		for(int i = 0; i < n; i++){
 			ChainGenerator cg = new ChainGenerator(shuffle(rand, new int[]{0,1,2,3,4}), uniformInRange(rand, slipLower, slipUpper));
+			result.add(cg);
+		}
+		
+		return result;
+		
+	}
+	
+	public static List<ChainGenerator> sampleM5(int n){
+		
+		List <ChainGenerator> result = new ArrayList<ChainGenerator>(n);
+		
+		Random rand = new Random(randomSeed);
+		
+		double slipLower = 0.0;
+		double slipUpper = 0.5;
+		
+		for(int i = 0; i < n; i++){
+			int [] bitVector = new int[]{rand.nextInt(2),rand.nextInt(2),rand.nextInt(2),rand.nextInt(2),rand.nextInt(2)};
+			ChainGenerator cg = new ChainGenerator(bitVector, uniformInRange(rand, slipLower, slipUpper), true);
 			result.add(cg);
 		}
 		
